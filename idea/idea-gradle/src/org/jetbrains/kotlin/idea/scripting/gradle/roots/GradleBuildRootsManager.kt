@@ -197,7 +197,8 @@ class GradleBuildRootsManager(val project: Project) : ScriptingSupport() {
 
         if (root is GradleBuildRoot.Legacy) return
 
-        val templateClasspath = GradleScriptDefinitionsContributor.getDefinitionsTemplateClasspath(project)
+        val templateClasspath = GradleScriptDefinitionsContributor.getGradleScriptDefinitionsClassPath(project) ?: return
+
         val newData = GradleBuildRootData(build.projectRoots, templateClasspath, build.models)
         val mergedData = if (build.failed && root is GradleBuildRoot.Imported) merge(root.data, newData) else newData
 

@@ -90,3 +90,7 @@ fun scriptingDebugLog(message: () -> String) {
         logger.debug("[KOTLIN_GRADLE_DSL] ${message()}")
     }
 }
+
+fun scriptingInfoLog(message: String) {
+    logger.info("[KOTLIN_GRADLE_DSL] $message")
+}
