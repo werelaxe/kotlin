@@ -63,7 +63,7 @@ abstract class KotlinIrLinker(
 
     protected val deserializersForModules = mutableMapOf<ModuleDescriptor, IrModuleDeserializer>()
 
-    abstract val fakeOverrideBuilder: FakeOverrideBuilder
+    abstract val fakeOverrideBuilderImpl: FakeOverrideBuilderImpl
     abstract val fakeOverrideChecker: FakeOverrideChecker
 
     private val haveSeen = mutableSetOf<IrSymbol>()
@@ -561,16 +561,16 @@ abstract class KotlinIrLinker(
         deserializersForModules.values.forEach { it.init() }
     }
 
-    override fun postProcess() {
+    override fun postProcess(validate: Boolean) {
         deserializersForModules.values.forEach {
             it.postProcess {
-                fakeOverrideBuilder.provideFakeOverrides(it)
-                fakeOverrideChecker.check(it)
+                fakeOverrideBuilderImpl.provideFakeOverrides(it)
+                if (validate) fakeOverrideChecker.check(it)
             }
         }
         finalizeExpectActualLinker()
 
-        val unbound = symbolTable.noUnboundLeft("unbound after fake overrides:")
+        symbolTable.noUnboundLeft("unbound after fake overrides:")
     }
 
     // The issue here is that an expect can not trigger its actual deserialization by reachability
@@ -663,6 +663,6 @@ enum class DeserializationStrategy(
     WITH_INLINE_BODIES(false, false, false, true)
 }
 
-interface AbstractFakeOverrideBuilder {
+interface FakeOverrideBuilder {
     fun buildFakeOverridesForClass(clazz: IrClass)
 }
