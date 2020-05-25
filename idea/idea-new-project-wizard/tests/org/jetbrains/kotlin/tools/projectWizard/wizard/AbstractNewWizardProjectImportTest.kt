@@ -35,22 +35,11 @@ import java.nio.file.Paths
 abstract class AbstractNewWizardProjectImportTest : PlatformTestCase() {
     abstract fun createWizard(directory: Path, buildSystem: BuildSystem, projectDirectory: Path): Wizard
 
-    lateinit var sdkCreationChecker: KotlinSdkCreationChecker
-
     override fun setUp() {
         super.setUp()
-        runWriteAction {
-            val sdk = SimpleJavaSdkType().createJdk(SDK_NAME, IdeaTestUtil.requireRealJdkHome())
-            PluginTestCaseBase.addJdk(testRootDisposable, { sdk })
-        }
-        sdkCreationChecker = KotlinSdkCreationChecker()
-    }
 
-    override fun tearDown() {
-        sdkCreationChecker.removeNewKotlinSdk()
-        super.tearDown()
-        runWriteAction {
-            ProjectJdkTable.getInstance().findJdk(SDK_NAME)?.let(ProjectJdkTable.getInstance()::removeJdk)
+        PluginTestCaseBase.addJdk(testRootDisposable) {
+            SimpleJavaSdkType().createJdk(SDK_NAME, IdeaTestUtil.requireRealJdkHome())
         }
     }
 
