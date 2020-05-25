@@ -6,20 +6,16 @@
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
@@ -583,6 +579,31 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
 
     }
 
+
+    private class UserDataChecker {
+
+        private val storedData = Any()
+        private val KEY = Key.create<Any>("testKey")
+
+        private lateinit var uniqueStringLiteralText: String
+
+        fun store(uElement: UInjectionHost) {
+            val psiElement = uElement.sourcePsi as KtStringTemplateExpression
+            uniqueStringLiteralText = psiElement.text
+            psiElement.putCopyableUserData(KEY, storedData)
+        }
+
+        fun checkUserDataAlive(uElement: UElement) {
+            val psiElements = uElement.let { SyntaxTraverser.psiTraverser(it.sourcePsi) }
+                .filter(KtStringTemplateExpression::class.java)
+                .filter { it.text == uniqueStringLiteralText }.toList()
+
+            UsefulTestCase.assertNotEmpty(psiElements)
+            UsefulTestCase.assertTrue("uElement still should keep the userdata", psiElements.any { storedData === it!!.getCopyableUserData(KEY) })
+        }
+
+    }
+
     fun `test add intermediate returns to lambda`() {
 
         val file = myFixture.configureByText(
@@ -597,7 +618,9 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         ) as KtFile
 
+        val aliveChecker = UserDataChecker()
         val uLambdaExpression = file.findUElementByTextFromPsi<UInjectionHost>("\"abc\"")
+            .also(aliveChecker::store)
             .getParentOfType<ULambdaExpression>() ?: kfail("cant get lambda")
 
         val oldBlockExpression = uLambdaExpression.body.cast<UBlockExpression>()
@@ -625,9 +648,13 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             uLambdaExpression.sourcePsi
         )!!
 
+        aliveChecker.checkUserDataAlive(newBlockExpression)
+
         val uLambdaExpression2 = runWriteCommand {
             oldBlockExpression.replace(newBlockExpression) ?: kfail("cant replace")
         }.getParentOfType<ULambdaExpression>() ?: kfail("cant get lambda")
+
+        aliveChecker.checkUserDataAlive(uLambdaExpression2)
 
         TestCase.assertEquals(
             """
@@ -665,7 +692,6 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
 
     }
 
-
     fun `test converting lambda to if`() {
 
         val file = myFixture.configureByText(
@@ -683,10 +709,13 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent()
         ) as KtFile
 
+        val aliveChecker = UserDataChecker()
         val uLambdaExpression = file.findUElementByTextFromPsi<UInjectionHost>("\"abc\"")
+            .also { aliveChecker.store(it) }
             .getParentOfType<ULambdaExpression>() ?: kfail("cant get lambda")
 
         val oldBlockExpression = uLambdaExpression.body.cast<UBlockExpression>()
+        aliveChecker.checkUserDataAlive(oldBlockExpression)
 
         val newLambda = with(uastElementFactory) {
             createLambdaExpression(
@@ -704,10 +733,13 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                         uLambdaExpression.sourcePsi
                     )!!,
                     uLambdaExpression.sourcePsi
-                )!!,
+                )!!.also {
+                    aliveChecker.checkUserDataAlive(it)
+                },
                 uLambdaExpression.sourcePsi
             )!!
         }
+        aliveChecker.checkUserDataAlive(newLambda)
 
         val uLambdaExpression2 = runWriteCommand {
             uLambdaExpression.replace(newLambda) ?: kfail("cant replace")
@@ -749,6 +781,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
                             ULiteralExpression (value = "exit")
         """.trimIndent(), uLambdaExpression2.asRecursiveLogString().trim()
         )
+        aliveChecker.checkUserDataAlive(uLambdaExpression2)
 
     }
 

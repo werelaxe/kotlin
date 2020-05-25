@@ -62,7 +62,9 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
 
             oldPsi is KtBlockExpression && newPsi is KtBlockExpression -> {
                 if (!hasBraces(oldPsi) && hasBraces(newPsi)) {
-                    oldPsi to psiFactory.createLambdaExpression("none", newPsi.statements.joinToString("\n") { it.text }).bodyExpression!!
+                    oldPsi to psiFactory.createLambdaExpression("none", newPsi.statements.joinToString("\n") { "println()" }).bodyExpression!!.also {
+                        it.statements.zip(newPsi.statements).forEach { it.first.replace(it.second) }
+                    }
                 } else
                     oldPsi to newPsi
             }
@@ -159,8 +161,11 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
     private fun KtExpression.ensureBlockExpressionBraces(): KtExpression {
         if (this !is KtBlockExpression || hasBraces(this)) return this
-        @Suppress("UNCHECKED_CAST")
-        return psiFactory.createBlock(this.statements.joinToString("\n") { it.text })
+        val blockExpression = psiFactory.createBlock(this.statements.joinToString("\n") { "println()" })
+        for ((placeholder, statement) in blockExpression.statements.zip(this.statements)) {
+            placeholder.replace(statement)
+        }
+        return blockExpression
     }
 
     @Deprecated("use version with context parameter")
@@ -313,9 +318,13 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     /*override*/ fun createBlockExpression(expressions: List<UExpression>, context: PsiElement?): UBlockExpression? {
+        val sourceExpressions = expressions.flatMap { it.toSourcePsiFakeAware() }
         val block = psiFactory.createBlock(
-            expressions.flatMap { it.toSourcePsiFakeAware() }.joinToString(separator = "\n") { it.text ?: "" }
+            sourceExpressions.joinToString(separator = "\n") { "println()" }
         )
+        for ((placeholder, psiElement) in block.statements.zip(sourceExpressions)) {
+            placeholder.replace(psiElement)
+        }
         return KotlinUBlockExpression(block, null)
     }
 
@@ -366,7 +375,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
             old.replace(new)
         }
 
-        return psiFactory.createExpression(ktLambdaExpression.text).toUElementOfType()!!
+        return ktLambdaExpression.toUElementOfType()!!
     }
 
     @Deprecated("use version with context parameter")
