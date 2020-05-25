@@ -46,7 +46,7 @@ internal fun MethodNode.acceptWithStateMachine(
     val element = if (irFunction.isSuspend)
         irFunction.psiElement ?: classCodegen.irClass.psiElement
     else
-        classCodegen.context.suspendLambdaToOriginalFunctionMap[classCodegen.irClass.attributeOwnerId]!!.symbol.descriptor.psiElement
+        classCodegen.context.suspendLambdaToOriginalFunctionMap[classCodegen.irClass.attributeOwnerId]!!.psiElement
     val visitor = CoroutineTransformerMethodVisitor(
         methodVisitor, access, name, desc, signature, exceptions.toTypedArray(),
         obtainClassBuilderForCoroutineState = obtainContinuationClassBuilder,

@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrGetEnumValue
+import org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
@@ -428,3 +429,6 @@ val IrFunction.deprecationFlags: Int
 
 val IrDeclaration.psiElement: PsiElement?
     get() = (descriptor as? DeclarationDescriptorWithSource)?.psiElement
+
+val IrMemberAccessExpression.psiElement: PsiElement?
+    get() = (symbol.descriptor.original as? DeclarationDescriptorWithSource)?.psiElement
