@@ -15,20 +15,36 @@
 /*
  * TESTCASE NUMBER: 1
  * UNEXPECTED BEHAVIOUR
- * ISSUES: KT-39073
  */
 package testPackCase1
-
 import libCase1.*
 import kotlin.text.*
 
 fun case1() {
-    <!DEBUG_INFO_CALL("fqName: kotlin.text.Regex.<init>; typeCall: function")!>Regex("")<!>
+    Regex("")
 }
 
 // FILE: Lib.kt
 package libCase1
-class Regex(pattern: String)
+fun Regex(pattern: String) {}
+
+
+// FILE: TestCase1.kt
+/*
+ * TESTCASE NUMBER: 1
+ * UNEXPECTED BEHAVIOUR
+ */
+package testPackCase1
+import kotlin.text.Regex
+
+fun case() {
+    <!DEBUG_INFO_CALL("fqName: kotlin.text.Regex.<init>; typeCall: function")!>Regex("")<!>
+}
+
+// FILE: Lib.kt
+package testPackCase1
+class Regex(pattern: String) {}
+
 
 
 // FILE: TestCase2.kt
@@ -37,16 +53,33 @@ class Regex(pattern: String)
  * UNEXPECTED BEHAVIOUR
  */
 package testPackCase2
-import libCase2.*
+import libCase2.a.*
+import libCase2.b.*
 import kotlin.text.*
 
 fun case2() {
-    Regex("")
+    <!DEBUG_INFO_CALL("fqName: libCase2.a.Regex; typeCall: function")!>Regex("")<!>
 }
 
 // FILE: Lib.kt
-package libCase2
+package libCase2.a
 fun Regex(pattern: String) {}
+
+//object Regex {
+//    operator fun invoke(s: String) {}
+//}
+
+// FILE: Lib1.kt
+package libCase2.b
+
+enum class Regex{
+    ;
+
+    companion object {
+        operator fun invoke(s: String) {}
+    }
+}
+
 
 
 // FILE: TestCase3.kt
@@ -59,7 +92,7 @@ import libCase3.*
 import kotlin.text.*
 
 fun case3() {
-    <!DEBUG_INFO_CALL("")!>Regex("")<!>
+    <!DEBUG_INFO_CALL("fqName: libCase3.Regex; typeCall: function")!>Regex("")<!>
 }
 
 // FILE: Lib.kt
@@ -77,16 +110,16 @@ object Regex {
  * UNEXPECTED BEHAVIOUR
  */
 package testPackCase4
-import libCase4.*
-import lib1Case4.*
+import libCase4.a.*
+import libCase4.b.*
 import kotlin.text.*
 
 fun case4() {
-    <!DEBUG_INFO_CALL("")!>Regex("")<!>
+    <!DEBUG_INFO_CALL("fqName: libCase4.a.Regex; typeCall: function")!>Regex("")<!>
 }
 
 // FILE: Lib.kt
-package libCase4
+package libCase4.a
 fun Regex(pattern: String) {}
 
 object Regex {
@@ -94,7 +127,7 @@ object Regex {
 }
 
 // FILE: Lib1.kt
-package lib1Case4
+package libCase4.b
 
 enum class Regex{
     ;
@@ -109,35 +142,17 @@ enum class Regex{
 /*
  * TESTCASE NUMBER: 5
  * UNEXPECTED BEHAVIOUR
- * ISSUES: KT-39073
  */
 package testPackCase5
-import libCase5.*
-import lib1Case5.*
-import kotlin.text.*
 
-fun case5() {
-    <!DEBUG_INFO_CALL("fqName: kotlin.text.Regex.<init>; typeCall: function")!>Regex("")<!>
+fun case() {
+   <!DEBUG_INFO_CALL("fqName: testPackCase5.Regex; typeCall: function")!>Regex("")<!>
 }
 
 // FILE: Lib.kt
-package libCase5
-//fun Regex(pattern: String) {}
+package testPackCase5
+fun Regex(pattern: String) {}
 
-object Regex {
-    operator fun invoke(s: String) {}
-}
-
-// FILE: Lib1.kt
-package lib1Case5
-
-enum class Regex{
-    ;
-
-    companion object {
-        operator fun invoke(s: String) {}
-    }
-}
 
 // FILE: TestCase6.kt
 /*
@@ -145,85 +160,64 @@ enum class Regex{
  * UNEXPECTED BEHAVIOUR
  */
 package testPackCase6
-import libCase6.*
-import lib1Case6.*
 import kotlin.text.*
 
-fun case6() {
-    <!DEBUG_INFO_CALL("fqName: libCase6.Regex; typeCall: function")!>Regex("")<!>
+fun case() {
+   <!DEBUG_INFO_CALL("fqName: testPackCase6.Regex; typeCall: function")!>Regex("")<!>
 }
 
 // FILE: Lib.kt
-package libCase6
+package testPackCase6
 fun Regex(pattern: String) {}
 
-//object Regex {
-//    operator fun invoke(s: String) {}
-//}
-
-// FILE: Lib1.kt
-package lib1Case6
-
-enum class Regex{
-    ;
-
-    companion object {
-        operator fun invoke(s: String) {}
-    }
-}
 
 // FILE: TestCase7.kt
 /*
  * TESTCASE NUMBER: 7
  * UNEXPECTED BEHAVIOUR
- * ISSUES: KT-39073
  */
 package testPackCase7
-import libCase7.*
-import kotlin.text.*
+import kotlin.text.Regex
 
-fun case7() {
-    <!DEBUG_INFO_CALL("fqName: kotlin.text.Regex.<init>; typeCall: function")!>Regex("")<!>
+fun case() {
+   <!DEBUG_INFO_CALL("fqName: kotlin.text.Regex.<init>; typeCall: function")!>Regex("")<!>
 }
 
 // FILE: Lib.kt
-package libCase7
+package testPackCase7
+class Regex(pattern: String) {}
 
-enum class Regex{
-    ;
-
-    companion object {
-        operator fun invoke(s: String) {}
-    }
-}
 
 
 // FILE: TestCase8.kt
 /*
  * TESTCASE NUMBER: 8
  * UNEXPECTED BEHAVIOUR
- * ISSUES: KT-39073
  */
 package testPackCase8
-import libCase8.*
-import lib1Case8.*
-import kotlin.text.*
 
-fun case8() {
-    <!DEBUG_INFO_CALL("fqName: kotlin.text.Regex.<init>; typeCall: function")!>Regex("")<!>
+fun case() {
+    <!DEBUG_INFO_CALL("fqName: testPackCase8.Regex.<init>; typeCall: function")!>Regex("")<!>
 }
 
 // FILE: Lib.kt
-package libCase8
+package testPackCase8
 class Regex(pattern: String) {}
 
-// FILE: Lib1.kt
-package lib1Case8
 
-enum class Regex{
-    ;
+// FILE: TestCase9.kt
+/*
+ * TESTCASE NUMBER: 9
+ * UNEXPECTED BEHAVIOUR
+ */
+package testPackCase9
+import kotlin.text.*
 
-    companion object {
-        operator fun invoke(s: String) {}
-    }
+fun case() {
+    <!DEBUG_INFO_CALL("fqName: testPackCase9.Regex.<init>; typeCall: function")!>Regex("")<!>
 }
+
+// FILE: Lib.kt
+package testPackCase9
+class Regex(pattern: String) {}
+
